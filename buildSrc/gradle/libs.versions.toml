@@ -1,0 +1,35 @@
+[versions]
+androidx-lifecycle = "2.9.1"
+composeMultiplatform = "1.9.0-beta01"
+kotlin = "2.2.0"
+ksp = "2.2.0-2.0.2"
+jgit = "6.9.0.202403050737-r"
+openapiGenerator = "7.14.0"
+junit = "5.13.4"
+junit-launcher = "1.13.4"
+multiplatform-markdown-renderer = "0.26.0"
+
+[libraries]
+androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
+jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version.ref = "jgit"}
+openApiGenerator = { module = "org.openapitools:openapi-generator-gradle-plugin", version.ref = "openapiGenerator" }
+kotlinSerialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "kotlin" }
+ksp = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
+kotlin-gradle-plugin-api = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin-api", version.ref = "kotlin" }
+kotlin-gradle-plugin-model = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin-model", version.ref = "kotlin" }
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlin-gradle-plugin-embedded = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin-embedded", version.ref = "kotlin" }
+kotlin-gradle-plugin-model-embedded = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin-model-embedded", version.ref = "kotlin" }
+kotlin-gradle-plugin-api-embedded = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin-api-embedded", version.ref = "kotlin" }
+jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit" }
+jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
+jupiter-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-launcher" }
+android-gradle = { module = "com.android.tools.build:gradle", version = "8.11.1" }
+multiplatform-markdown-renderer-m3 = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version.ref = "multiplatform-markdown-renderer" }
+
+[plugins]
+composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
+composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+
+
