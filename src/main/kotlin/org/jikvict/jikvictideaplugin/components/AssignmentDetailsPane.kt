@@ -4,12 +4,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,17 +26,22 @@ import com.mikepenz.markdown.m3.Markdown
 import kotlinx.coroutines.launch
 import org.jikvict.api.models.AssignmentDto
 import org.jikvict.api.models.AssignmentInfo
+import org.jikvict.api.models.PendingStatusResponseLong
 import org.jikvict.jikvictideaplugin.services.AssignmentService
+import com.intellij.openapi.project.Project
 
 @Composable
 fun AssignmentDetailsPane(
     assignment: AssignmentDto,
     info: AssignmentInfo?,
     service: AssignmentService,
+    project: Project,
 ) {
     val scope = rememberCoroutineScope()
     var isSubmitting by remember { mutableStateOf(false) }
     var submitError by remember { mutableStateOf<String?>(null) }
+    var submitStatus by remember { mutableStateOf<String?>(null) }
+    var submitSuccess by remember { mutableStateOf<String?>(null) }
 
     androidx.compose.foundation.text.selection.SelectionContainer {
         Column(
@@ -54,24 +61,74 @@ fun AssignmentDetailsPane(
             Text("Attempts: ${info?.attemptsUsed ?: 0}/${info?.maxAttempts ?: assignment.maximumAttempts}")
             Spacer(Modifier.height(8.dp))
 
-            Button(onClick = {
-                if (!isSubmitting) {
-                    isSubmitting = true
-                    submitError = null
-                    scope.launch {
-                        try {
-                            service.submitAssignment(assignment)
-                        } catch (e: Exception) {
-                            submitError = e.message ?: e.toString()
-                        } finally {
-                            isSubmitting = false
+            Button(
+                onClick = {
+                    if (!isSubmitting) {
+                        isSubmitting = true
+                        submitError = null
+                        submitStatus = "Uploading..."
+                        submitSuccess = null
+                        scope.launch {
+                            try {
+                                service.submitAssignment(assignment, project) { status ->
+                                    submitStatus = when (status.status) {
+                                        PendingStatusResponseLong.Status.PENDING -> "Processing..."
+                                        PendingStatusResponseLong.Status.DONE -> "Done"
+                                        PendingStatusResponseLong.Status.FAILED -> "Failed: ${status.message ?: "Unknown error"}"
+                                        PendingStatusResponseLong.Status.REJECTED -> "Rejected: ${status.message ?: "Unknown reason"}"
+                                        PendingStatusResponseLong.Status.CANCELLED -> "Cancelled"
+                                    }
+                                    
+                                    if (status.status != PendingStatusResponseLong.Status.PENDING) {
+                                        if (status.status == PendingStatusResponseLong.Status.DONE) {
+                                            submitSuccess = "Submission completed successfully!"
+                                        } else if (status.status == PendingStatusResponseLong.Status.FAILED || 
+                                                   status.status == PendingStatusResponseLong.Status.REJECTED) {
+                                            submitError = status.message ?: "Submission failed"
+                                        }
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                submitError = e.message ?: e.toString()
+                                submitStatus = null
+                            } finally {
+                                isSubmitting = false
+                            }
                         }
                     }
-                }
-            }) {
+                },
+                enabled = !isSubmitting
+            ) {
                 Text(if (isSubmitting) "Submitting..." else "Submit")
             }
-            submitError?.let { Text("Error: $it", color = MaterialTheme.colorScheme.error) }
+            
+            if (isSubmitting) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+            
+            submitStatus?.let { 
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            
+            submitSuccess?.let { 
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            
+            submitError?.let { 
+                Text(
+                    text = "Error: $it",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
         }
     }
 }

@@ -28,5 +28,9 @@
         <toolWindow id="JIkvict" anchor="right"
                     factoryClass="org.jikvict.jikvictideaplugin.JIkvictToolWindowFactory"/>
 
+        <applicationService serviceImplementation="org.jikvict.jikvictideaplugin.services.SettingsState"/>
+
+        <postStartupActivity implementation="org.jikvict.jikvictideaplugin.listeners.ProjectMetaDetector"/>
+
     </extensions>
 </idea-plugin>

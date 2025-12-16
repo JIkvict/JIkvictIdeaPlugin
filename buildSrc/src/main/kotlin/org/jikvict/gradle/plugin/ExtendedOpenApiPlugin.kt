@@ -41,7 +41,11 @@ abstract class ExtendedOpenApiPlugin : Plugin<Project> {
             tasks.register<GetOpenApiTask>("getOpenApiJson") {
                 repoUrl.set("https://github.com/JIkvict/JIkvictBackend.git")
                 branch.set("docs")
-                version.set("latest")
+                version.set(
+                    target.findProperty("openapi.version") as String?
+                        ?: System.getenv("OPENAPI_VERSION")
+                        ?: throw IllegalArgumentException("Missing openapi.version property")
+                )
                 outputFile.set(layout.buildDirectory.file("openapi.json"))
             }
 

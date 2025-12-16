@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -68,16 +69,17 @@ fun AssignmentListItem(
         cpuLimit = 500,
         pidsLimit = 500,
         isClosed = false,
-        maximumAttempts = 3
+        maximumAttempts = 3,
+        assignmentGroupsIds = listOf()
     ),
     onClick: () -> Unit = {},
     assignmentInfo: AssignmentInfo? = null,
 ) {
-    // Use a more interesting container color and proper rounded shape.
-    // Also let Card handle click for correct ripple bounded to shape.
-    val shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+    
+    
+    val shape = RoundedCornerShape(12.dp)
 
-    // Slight tonal elevation to differentiate from panel background.
+    
     val colors = CardDefaults.cardColors(
         containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.9f),
         contentColor = MaterialTheme.colorScheme.onSecondaryContainer,

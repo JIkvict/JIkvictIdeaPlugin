@@ -11,7 +11,7 @@ class JIkvictToolWindowFactory: ToolWindowFactory {
         toolWindow: ToolWindow
     ) {
         val contentFactory = ContentFactory.getInstance()
-        val content = contentFactory.createContent(UiMainPanel().createPanel(), "", false)
+        val content = contentFactory.createContent(UiMainPanel(project).createPanel(), "", false)
         toolWindow.contentManager.addContent(content)
     }
 }

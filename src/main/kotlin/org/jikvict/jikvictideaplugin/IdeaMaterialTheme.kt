@@ -23,15 +23,15 @@ private fun uiColor(key: String, fallback: Color): Color {
 private fun jbColor(light: Int, dark: Int): Color = Color(JBColor(light, dark).rgb)
 
 private fun buildIdeaColorScheme(dark: Boolean): ColorScheme {
-    // Core surfaces try to reflect IDE panel backgrounds and text
+    
     val background = uiColor("Panel.background", if (dark) Color(0xFF2B2B2B) else Color(0xFFFFFFFF))
     val surface = background
     val onSurface = uiColor("Label.foreground", if (dark) Color(0xFFE6E6E6) else Color(0xFF1F1F1F))
     val outline = uiColor("Separator.foreground", if (dark) Color(0xFF3C3F41) else Color(0xFFDDDDDD))
 
-    // Primary/secondary use IDE accent if available; fall back to JBColor link colors
+    
     val accent = run {
-        // Many LaFs expose accent via named keys; try a few
+        
         val keys = listOf("Link.activeForeground", "Component.accentColor", "Actions.Blue")
         val c = keys.firstNotNullOfOrNull { UIManager.getColor(it) }
         c?.let { Color(it.rgb) } ?: jbColor(0x0A84FF, 0x409CFF)
@@ -73,7 +73,7 @@ private fun buildIdeaColorScheme(dark: Boolean): ColorScheme {
 
 @Composable
 fun IdeaMaterialTheme(content: @Composable () -> Unit) {
-    // Detect dark mode from IDE
+    
     val laf = LafManager.getInstance().currentUIThemeLookAndFeel
     val isDark = laf?.name?.contains("Dark", ignoreCase = true) == true || laf?.name?.contains(
         "Darcula",
