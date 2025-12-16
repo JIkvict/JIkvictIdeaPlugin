@@ -26,6 +26,7 @@
     <extensions defaultExtensionNs="com.intellij">
 
         <toolWindow id="JIkvict" anchor="right"
+                    icon="/META-INF/pluginIcon.svg"
                     factoryClass="org.jikvict.jikvictideaplugin.JIkvictToolWindowFactory"/>
 
         <applicationService serviceImplementation="org.jikvict.jikvictideaplugin.services.SettingsState"/>
