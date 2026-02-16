@@ -1,6 +1,9 @@
 package org.jikvict.jikvictideaplugin.services
 
+import com.intellij.ide.RecentProjectsManager
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -26,12 +29,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import org.jikvict.api.apis.AssignmentControllerApi
+import org.jikvict.api.apis.TaskStatusControllerApi
 import org.jikvict.api.models.AssignmentDto
+import org.jikvict.api.models.PendingStatusResponseLong
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 
 class AssignmentService(private val api: AssignmentControllerApi? = null) {
     companion object {
@@ -62,8 +70,8 @@ class AssignmentService(private val api: AssignmentControllerApi? = null) {
 
     suspend fun submitAssignment(
         assignment: AssignmentDto,
-        project: com.intellij.openapi.project.Project,
-        onStatusUpdate: (org.jikvict.api.models.PendingStatusResponseLong) -> Unit = {}
+        project: Project,
+        onStatusUpdate: (PendingStatusResponseLong) -> Unit = {}
     ) {
         println("[JIkvict] Starting submission for assignment ${assignment.id} (${assignment.title})")
 
@@ -134,7 +142,7 @@ class AssignmentService(private val api: AssignmentControllerApi? = null) {
         }
 
 
-        val submitResponse: org.jikvict.api.models.PendingStatusResponseLong = response.body()
+        val submitResponse: PendingStatusResponseLong = response.body()
         println("[JIkvict] Upload successful, received taskId: ${submitResponse.data}")
 
         val taskId = submitResponse.data ?: run {
@@ -143,20 +151,20 @@ class AssignmentService(private val api: AssignmentControllerApi? = null) {
         }
 
 
-        val statusApi = org.jikvict.api.apis.TaskStatusControllerApi(
+        val statusApi = TaskStatusControllerApi(
             baseUrl = BASE_URL,
             httpClient = client
         )
 
 
         println("[JIkvict] Starting status polling for taskId: $taskId")
-        var currentStatus: org.jikvict.api.models.PendingStatusResponseLong
+        var currentStatus: PendingStatusResponseLong
         do {
             kotlinx.coroutines.delay(1500)
             currentStatus = statusApi.getTaskStatus(taskId).body()
             println("[JIkvict] Status: ${currentStatus.status}, Message: ${currentStatus.message}")
             onStatusUpdate(currentStatus)
-        } while (currentStatus.status == org.jikvict.api.models.PendingStatusResponseLong.Status.PENDING)
+        } while (currentStatus.status == PendingStatusResponseLong.Status.PENDING)
 
         println("[JIkvict] Submission processing completed with status: ${currentStatus.status}")
         client.close()
@@ -187,19 +195,31 @@ class AssignmentService(private val api: AssignmentControllerApi? = null) {
         }
 
         try {
-            val tempDir = Files.createTempDirectory("jikvict_temp").toFile()
+            val recentPaths = RecentProjectsManager.getInstance().lastProjectCreationLocation
+            val projectsBaseDir = if (!recentPaths.isNullOrEmpty()) {
+                File(recentPaths).parentFile
+            } else {
+                File(System.getProperty("user.home"), "IdeaProjects")
+            }
+            projectsBaseDir.mkdirs()
 
-            val zipFile = File(tempDir, "project.zip")
-            FileOutputStream(zipFile).use { out ->
-                val bytes: ByteArray = response.body()
-                out.write(bytes)
+            val projectDir = File(projectsBaseDir, "assignment-${assignment.id}")
+            projectDir.mkdirs()
+            val zipFile = withContext(Dispatchers.IO) {
+                File.createTempFile("project", ".zip")
+            }
+            withContext(Dispatchers.IO) {
+                FileOutputStream(zipFile).use { out ->
+                    val bytes: ByteArray = response.body()
+                    out.write(bytes)
+                }
             }
 
 
             ZipInputStream(zipFile.inputStream()).use { zis ->
                 var entry = zis.nextEntry
                 while (entry != null) {
-                    val newFile = File(tempDir, entry.name)
+                    val newFile = File(projectDir, entry.name)
                     if (entry.isDirectory) {
                         newFile.mkdirs()
                     } else {
@@ -215,7 +235,7 @@ class AssignmentService(private val api: AssignmentControllerApi? = null) {
             zipFile.delete()
 
 
-            val taskDir = tempDir.listFiles()?.firstOrNull {
+            val taskDir = projectDir.listFiles()?.firstOrNull {
                 it.isDirectory && it.name.startsWith("task")
             } ?: error("Task directory not found in archive")
 
@@ -231,7 +251,7 @@ class AssignmentService(private val api: AssignmentControllerApi? = null) {
 
 
             ApplicationManager.getApplication().invokeLater {
-                com.intellij.ide.impl.ProjectUtil.openOrImport(taskDir.toPath(), null, true)
+                ProjectUtil.openOrImport(taskDir.toPath(), null, true)
             }
         } finally {
             client.close()
@@ -249,7 +269,7 @@ class AssignmentService(private val api: AssignmentControllerApi? = null) {
     private fun zipDir(sourceDir: File, zip: File) {
         val excludedDirs = setOf("build", ".gradle", ".idea", "out", ".git", "target")
 
-        java.util.zip.ZipOutputStream(zip.outputStream()).use { zos ->
+        ZipOutputStream(zip.outputStream()).use { zos ->
             fun addFile(file: File, basePath: String) {
                 val entryName = file.path.removePrefix(basePath).trimStart(File.separatorChar)
 
@@ -262,7 +282,7 @@ class AssignmentService(private val api: AssignmentControllerApi? = null) {
                 if (file.isDirectory) {
                     file.listFiles()?.forEach { addFile(it, basePath) }
                 } else {
-                    zos.putNextEntry(java.util.zip.ZipEntry(entryName))
+                    zos.putNextEntry(ZipEntry(entryName))
                     file.inputStream().use { input -> input.copyTo(zos) }
                     zos.closeEntry()
                 }
