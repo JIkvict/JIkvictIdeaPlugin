@@ -47,7 +47,7 @@ dependencies {
     implementation(libs.kotlin.serialization)
 
     // Markdown renderer (Material3)
-    implementation("com.mikepenz:multiplatform-markdown-renderer-m3:0.26.0")
+    implementation("com.mikepenz:multiplatform-markdown-renderer-m3:0.35.0")
 
 }
 

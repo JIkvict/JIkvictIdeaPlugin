@@ -35,7 +35,6 @@ import org.jikvict.api.models.PendingStatusResponseLong
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.file.Files
-import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
@@ -268,6 +267,7 @@ class AssignmentService(private val api: AssignmentControllerApi? = null) {
 
     private fun zipDir(sourceDir: File, zip: File) {
         val excludedDirs = setOf("build", ".gradle", ".idea", "out", ".git", "target")
+        val excludedFiles = setOf(".jikvict-meta.json")
 
         ZipOutputStream(zip.outputStream()).use { zos ->
             fun addFile(file: File, basePath: String) {
@@ -276,6 +276,11 @@ class AssignmentService(private val api: AssignmentControllerApi? = null) {
 
                 if (file.isDirectory && excludedDirs.contains(file.name)) {
                     println("[JIkvict] Skipping directory: ${file.name}")
+                    return
+                }
+
+                if (!file.isDirectory && excludedFiles.contains(file.name)) {
+                    println("[JIkvict] Skipping file: ${file.name}")
                     return
                 }
 
