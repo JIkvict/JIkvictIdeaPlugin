@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "org.jikvict"
-version = "1.1-SNAPSHOT"
+version = "1.2-SNAPSHOT"
 
 kotlin.sourceSets.main {
     kotlin.srcDir("build/generated/openapi/src/commonMain/kotlin")
